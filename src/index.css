@@ -1,0 +1,21 @@
+/* src/index.css */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  /* This prevents the page from scrolling on the login screen */
+  overflow: hidden; 
+  /* Sets a default background color just in case */
+  background-color: #0b0f19; 
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* If you want the authenticated dashboard to be able to scroll if you have a lot of URLs later, add this: */
+#root {
+  height: 100vh;
+  overflow-y: auto; 
+}
