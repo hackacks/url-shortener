@@ -1,5 +1,5 @@
 {
-  "homepage": "http://localhost:3000/shortener",
+  "homepage": "https://hackack.tech/shortener/",
   "name": "url-shortener-frontend",
   "version": "0.1.0",
   "private": true,
