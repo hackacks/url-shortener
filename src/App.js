@@ -28,7 +28,7 @@ function App() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    document.title = "HACKACK URL SHORTNER";
+    document.title = "HACKACK'S URL Shortener";
   }, []);
 
   useEffect(() => {
@@ -172,7 +172,7 @@ function App() {
         <nav style={styles.nav}>
           <div style={styles.logoContainer}>
             <img src={myLogo} alt="HackAck Logo" style={styles.logoImg} />
-            <span style={styles.logoText}>HACKACK URL SHORTENER</span>
+            <span style={styles.logoText}>HACKACK'S URL Shortener</span>
           </div>
           <div style={styles.userInfo}>
             <span style={styles.userEmail}>{auth.user?.profile.email}</span>
@@ -338,8 +338,8 @@ function App() {
     <div style={styles.loginPage}>
       <div style={styles.loginCard}>
         <img src={myLogo} alt="HackAck Logo" style={styles.bigLogoImg} />
-        <h1 style={styles.title}>HACKACK URL SHORTNER</h1>
-        <p style={styles.subtitle}>The professional URL shortener for your business.</p>
+        <h1 style={styles.title}>HACKACK'S URL Shortener</h1>
+        <p style={styles.subtitle}>The professional URL shortener powered by React and AWS(API Gateway,Lambda,DynamoDB)</p>
         <button 
           onClick={handleLoginClick} 
           disabled={isAuthProcessing}
