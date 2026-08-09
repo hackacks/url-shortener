@@ -1,0 +1,44 @@
+name: Deploy SPA on Push
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NODE_ENV: production
+  LOCATION: /var/www/html/shortener/
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+        
+      - name: Install dependencies
+        run: npm ci
+
+      - name: initialize env
+        run: |
+          cp .env.production_non_sensitive .env.production
+    
+      - name: Build the SPA
+        run: npm run build
+      
+      - name: Deploy to SPA Server
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_KEY }}
+          ARGS: "-rlptgoD --delete"
+          SOURCE: "build/"
+          REMOTE_HOST: ${{ secrets.LIGHTSAIL_ADD }}
+          REMOTE_USER: ${{ secrets.LIGHTSAIL_USER }}
+          TARGET: ${{ env.LOCATION }}
