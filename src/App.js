@@ -161,9 +161,17 @@ function App() {
     setTimeout(() => setCopiedLinkId(null), 2000); 
   };
 
+  const handleSignOut = () => {
+    auth.removeUser();
+  };
+
   const handleLoginClick = () => {
     setIsRedirecting(true);
-    auth.signinRedirect();
+    auth.signinRedirect({
+      extraQueryParams: {
+        prompt: "login"
+      }
+    });
   };
 
   if (auth.isAuthenticated) {
@@ -176,7 +184,7 @@ function App() {
           </div>
           <div style={styles.userInfo}>
             <span style={styles.userEmail}>{auth.user?.profile.email}</span>
-            <button onClick={() => auth.removeUser()} style={styles.outlineBtn}>Sign Out</button>
+            <button onClick={handleSignOut} style={styles.outlineBtn}>Sign Out</button>
           </div>
         </nav>
 
