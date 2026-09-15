@@ -19,3 +19,14 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+#editors
+/.idea
+/.agents
+/.codex
+
+#tf
+.terraform.lock.hcl
+.terraform/
+main.tf
+outputs.tf

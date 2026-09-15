@@ -8,11 +8,13 @@ on:
 
 env:
   NODE_ENV: production
-  LOCATION: /var/www/html/shortener/
-
+  AWS_REGION: ap-south-1
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,12 +35,17 @@ jobs:
       - name: Build the SPA
         run: npm run build
       
-      - name: Deploy to SPA Server
-        uses: easingthemes/ssh-deploy@main
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_KEY }}
-          ARGS: "-rlptgoD --delete"
-          SOURCE: "build/"
-          REMOTE_HOST: ${{ secrets.LIGHTSAIL_ADD }}
-          REMOTE_USER: ${{ secrets.LIGHTSAIL_USER }}
-          TARGET: ${{ env.LOCATION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/url-shortner-github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-actions-deploy
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+        
+      - name: Invalidate CloudFront Cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
