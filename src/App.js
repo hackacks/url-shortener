@@ -516,6 +516,7 @@ function App() {
     setCopySuccess(false);
 
     let isValidUrl = false;
+    let hostname = "";
     try {
       const parsed = new URL(longUrl);
       const isHttp = parsed.protocol === "http:" || parsed.protocol === "https:";
@@ -523,6 +524,7 @@ function App() {
 
       if (isHttp && hasDot) {
         isValidUrl = true;
+        hostname = parsed.hostname.toLowerCase();
       }
     } catch (_) {
       isValidUrl = false;
@@ -530,6 +532,17 @@ function App() {
 
     if (!isValidUrl) {
       setErrorMessage("Please enter a valid web address (e.g., https://example.com)");
+      setIsLoading(false);
+      return;
+    }
+
+    const blockedDomains = ["hackack.tech", "tiny.hackack.tech", "shortener.hackack.tech", "localhost"];
+    const isSelfReferencing = blockedDomains.some(
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
+    );
+
+    if (isSelfReferencing) {
+      setErrorMessage("Links from this website cannot be shortened.");
       setIsLoading(false);
       return;
     }
