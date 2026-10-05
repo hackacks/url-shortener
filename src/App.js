@@ -6,6 +6,7 @@ import myLogo from "./logo.png";
 const API_ENDPOINT = process.env.REACT_APP_API_ENDPOINT;
 const GET_URLS_ENDPOINT = process.env.REACT_APP_GET_URLS_ENDPOINT;
 const DELETE_ENDPOINT = process.env.REACT_APP_DELETE_ENDPOINT;
+const SHORT_DOMAIN = process.env.REACT_APP_SHORT_DOMAIN || "tiny.arun.isroot.in";
 
 const THEME_STORAGE_KEY = "hackack-theme";
 
@@ -536,7 +537,15 @@ function App() {
       return;
     }
 
-    const blockedDomains = ["hackack.tech", "tiny.hackack.tech", "shortener.hackack.tech", "localhost"];
+    const blockedDomains = [
+      "hackack.tech",
+      "tiny.hackack.tech",
+      "shortener.hackack.tech",
+      "arun.isroot.in",
+      "tiny.arun.isroot.in",
+      "shortner.arun.isroot.in",
+      "localhost",
+    ];
     const isSelfReferencing = blockedDomains.some(
       (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
     );
@@ -560,7 +569,7 @@ function App() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to shorten URL");
 
-      setShortUrl(`https://tiny.hackack.tech/${data.short_code}`);
+      setShortUrl(`https://${SHORT_DOMAIN}/${data.short_code}`);
 
       if (showLinks) {
         fetchMyUrls();
@@ -733,7 +742,7 @@ function App() {
                         </thead>
                         <tbody>
                           {myUrls.map((item) => {
-                            const fullShortUrl = `https://tiny.hackack.tech/${item.shortCode}`;
+                            const fullShortUrl = `https://${SHORT_DOMAIN}/${item.shortCode}`;
                             const isThisRowCopied = copiedLinkId === item.shortCode;
                             const isThisRowDeleting = isDeleting === item.shortCode;
 

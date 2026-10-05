@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+*pycache*
 
 # testing
 /coverage
@@ -28,5 +29,4 @@ yarn-error.log*
 #tf
 .terraform.lock.hcl
 .terraform/
-main.tf
-outputs.tf
+*.tfvars
