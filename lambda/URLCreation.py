@@ -7,7 +7,7 @@ import urllib.error
 import socket
 import ipaddress
 import re
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote, urljoin
 from datetime import datetime, timezone
 from botocore.exceptions import ClientError
 
@@ -42,6 +42,17 @@ HTTP_TIMEOUT_SECONDS = 4
 
 UNSAFE_CHARS = {"<", ">", '"', "'", "`"}
 CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f]")
+
+BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Connection": "close",
+}
 
 
 def response(status_code, payload):
@@ -230,49 +241,57 @@ def resolve_final_url(url):
     """
     Follow redirects and return the final destination URL.
     Uses HEAD first, then falls back to GET if needed.
+    Handles anti-bot/WAF responses (401, 403, 429, 999) gracefully.
     """
     current = url
 
     for _ in range(MAX_REDIRECTS):
+        # 1. Try HEAD request first for fast redirect resolution
         try:
             req = urllib.request.Request(
                 current,
                 method="HEAD",
-                headers={
-                    "User-Agent": "Mozilla/5.0",
-                    "Accept": "*/*",
-                    "Connection": "close",
-                },
+                headers=BROWSER_HEADERS,
             )
             with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SECONDS) as resp:
                 final_url = resp.geturl()
                 if final_url == current:
                     return current
                 current = final_url
+                continue
         except urllib.error.HTTPError as e:
-            # Some servers reject HEAD. Try GET once for that hop.
-            if e.code in (405, 403):
-                try:
-                    req = urllib.request.Request(
-                        current,
-                        method="GET",
-                        headers={
-                            "User-Agent": "Mozilla/5.0",
-                            "Accept": "*/*",
-                            "Connection": "close",
-                        },
-                    )
-                    with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SECONDS) as resp:
-                        final_url = resp.geturl()
-                        if final_url == current:
-                            return current
-                        current = final_url
-                except Exception:
-                    raise
-            else:
-                raise
+            loc = e.headers.get("Location")
+            if loc:
+                current = urljoin(current, loc)
+                continue
+            # If server rejected HEAD (405, 403, 400, etc.), fall through to GET
+            pass
         except Exception:
-            raise
+            # HEAD failed (e.g. timeout or blocked), fall through to GET
+            pass
+
+        # 2. Fallback to GET request
+        try:
+            req = urllib.request.Request(
+                current,
+                method="GET",
+                headers=BROWSER_HEADERS,
+            )
+            with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SECONDS) as resp:
+                final_url = resp.geturl()
+                if final_url == current:
+                    return current
+                current = final_url
+                continue
+        except urllib.error.HTTPError as e:
+            loc = e.headers.get("Location")
+            if loc:
+                current = urljoin(current, loc)
+                continue
+            # Server responded (e.g., 401 Unauthorized, 403 Forbidden, 429 Rate Limited, 999 LinkedIn request denied).
+            # This confirms the destination server exists and was reached.
+            dest = e.geturl() if hasattr(e, "geturl") and e.geturl() else current
+            return dest
 
     return current
 

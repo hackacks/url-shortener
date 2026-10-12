@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "react-oidc-context";
+import QRCode from "qrcode";
 import myLogo from "./logo.png";
 
 // ENV Vars
@@ -227,6 +228,38 @@ const createStyles = (theme) => {
       fontWeight: "bold",
       transition: "all 0.3s ease",
     },
+    qrBtn: {
+      padding: "10px 18px",
+      borderRadius: "6px",
+      border: `1px solid ${isDark ? "#8b5cf6" : "#7c3aed"}`,
+      backgroundColor: isDark ? "rgba(139, 92, 246, 0.15)" : "rgba(124, 58, 237, 0.08)",
+      color: isDark ? "#c4b5fd" : "#6d28d9",
+      cursor: "pointer",
+      minWidth: "120px",
+      fontWeight: "bold",
+      fontSize: "14px",
+      transition: "all 0.2s ease",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "6px",
+    },
+    qrBtnSuccess: {
+      padding: "10px 18px",
+      borderRadius: "6px",
+      border: "none",
+      backgroundColor: "#10b981",
+      color: "#fff",
+      cursor: "default",
+      minWidth: "120px",
+      fontWeight: "bold",
+      fontSize: "14px",
+      transition: "all 0.3s ease",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "6px",
+    },
     popAnimation: {
       transform: "scale(1.05)",
       boxShadow: "0 0 15px rgba(16, 185, 129, 0.5)",
@@ -338,6 +371,34 @@ const createStyles = (theme) => {
       fontSize: "12px",
       transition: "all 0.2s ease",
       whiteSpace: "nowrap",
+    },
+    smallQrBtn: {
+      padding: "6px 12px",
+      borderRadius: "4px",
+      border: `1px solid ${isDark ? "#8b5cf6" : "#7c3aed"}`,
+      color: isDark ? "#c4b5fd" : "#6d28d9",
+      backgroundColor: isDark ? "rgba(139, 92, 246, 0.15)" : "rgba(124, 58, 237, 0.08)",
+      cursor: "pointer",
+      fontSize: "12px",
+      transition: "all 0.2s ease",
+      whiteSpace: "nowrap",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "4px",
+    },
+    smallQrSuccessBtn: {
+      padding: "6px 12px",
+      borderRadius: "4px",
+      border: "none",
+      color: "#fff",
+      backgroundColor: "#10b981",
+      cursor: "default",
+      fontSize: "12px",
+      transition: "all 0.2s ease",
+      whiteSpace: "nowrap",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "4px",
     },
     smallDeleteBtn: {
       padding: "6px 12px",
@@ -452,6 +513,7 @@ function App() {
   const [showLinks, setShowLinks] = useState(false);
 
   const [copiedLinkId, setCopiedLinkId] = useState(null);
+  const [qrDownloadedId, setQrDownloadedId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -619,6 +681,32 @@ function App() {
     setTimeout(() => setCopiedLinkId(null), 2000);
   };
 
+  const downloadQrCode = async (urlToEncode, filenameIdentifier = "short-url") => {
+    try {
+      const dataUrl = await QRCode.toDataURL(urlToEncode, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: "#000000",
+          light: "#ffffff",
+        },
+      });
+
+      const downloadLink = document.createElement("a");
+      downloadLink.href = dataUrl;
+      downloadLink.download = `qr-${filenameIdentifier}.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+
+      setQrDownloadedId(filenameIdentifier);
+      setTimeout(() => setQrDownloadedId(null), 2000);
+    } catch (err) {
+      console.error("Failed to generate QR code:", err);
+      alert("Failed to generate QR code. Please try again.");
+    }
+  };
+
   const handleSignOut = () => {
     auth.removeUser();
   };
@@ -701,6 +789,16 @@ function App() {
                       }
                     >
                       {copySuccess ? "✓ Copied!" : "Copy"}
+                    </button>
+                    <button
+                      onClick={() => downloadQrCode(shortUrl, "short-url")}
+                      style={
+                        qrDownloadedId === "short-url"
+                          ? { ...styles.qrBtnSuccess, ...styles.popAnimation }
+                          : styles.qrBtn
+                      }
+                    >
+                      {qrDownloadedId === "short-url" ? "✓ QR Downloaded!" : "📥 Download QR"}
                     </button>
                   </div>
                 </div>
@@ -785,6 +883,24 @@ function App() {
                                       disabled={isThisRowDeleting}
                                     >
                                       {isThisRowCopied ? "✓ Copied" : "Copy"}
+                                    </button>
+
+                                    <button
+                                      onClick={() =>
+                                        downloadQrCode(fullShortUrl, item.shortCode)
+                                      }
+                                      style={
+                                        qrDownloadedId === item.shortCode
+                                          ? {
+                                              ...styles.smallQrSuccessBtn,
+                                              ...styles.popAnimation,
+                                            }
+                                          : styles.smallQrBtn
+                                      }
+                                      disabled={isThisRowDeleting}
+                                      title="Download QR code"
+                                    >
+                                      {qrDownloadedId === item.shortCode ? "✓ QR" : "QR"}
                                     </button>
 
                                     {confirmDeleteId === item.shortCode ? (
